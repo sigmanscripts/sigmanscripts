@@ -1,0 +1,748 @@
+local WindUI = loadstring(game:HttpGet("https://tree-hub.vercel.app/api/UI/WindUI"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "SigmanHub", -- UI Title
+    --Icon = "rbxassetid://125272542064435", -- Url or rbxassetid or lucide
+    Icon = "droplet-off", -- Url or rbxassetid or lucide
+    Author = "@sigmanscripts", -- Author & Creator
+    Folder = "SigmanHub", -- Folder name for saving data (And key)
+    Size = UDim2.fromOffset(580, 460), -- UI Size
+    KeySystem = { -- Creates key system
+        Key = "KEY_3dd41e6dcecb4c6a8ec15544b0fa7a81", -- key
+        Note = "You can get free key on telegram @executorsw", -- Note
+        URL = "https://keyguardian.org/a/1011?id=Key_00001", -- URL To get key (example: Discord)
+        SaveKey = true, -- Saves the key in the folder specified above
+    }, 
+    Transparent = true,-- UI Transparency
+    Theme = "Dark", -- UI Theme
+    SideBarWidth = 200, -- UI Sidebar Width (number)
+    HasOutline = true, -- Adds Oultines to the window
+})
+
+Window:EditOpenButton({
+    Title = "Open Sigman Hub",
+    Icon = "image-upscale",  -- New icon
+    CornerRadius = UDim.new(0,10),
+    StrokeThickness = 3,
+    Color = ColorSequence.new(
+        Color3.fromHex("FF0F7B"), 
+        Color3.fromHex("F89B29")
+    )
+})
+
+-- no clip
+local Noclip = nil
+local Clip = nil
+ function noclip()
+Clip = false
+ local function Nocl()
+if Clip == false and game.Players.LocalPlayer.Character ~= nil then
+ for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+ if v:IsA('BasePart') and v.CanCollide and v.Name ~= floatName then
+ v.CanCollide = false 
+end
+end
+ end 
+wait(0.21)
+end
+ Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
+ end
+ function clip()
+ if Noclip then 
+Noclip:Disconnect() 
+end 
+Clip = true 
+end 
+----
+_G.HeadSize = 25
+_G.Disabled = false
+ 
+game:GetService('RunService').RenderStepped:connect(function()
+if _G.Disabled then
+for i,v in next, game:GetService('Players'):GetPlayers() do
+if v.Name ~= game:GetService('Players').LocalPlayer.Name then
+pcall(function()
+v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize,_G.HeadSize,_G.HeadSize)
+v.Character.HumanoidRootPart.Transparency = 0.7
+v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really red")
+v.Character.HumanoidRootPart.Material = "Neon"
+v.Character.HumanoidRootPart.CanCollide = false
+end)
+end
+end
+end
+end)
+
+function refHitbox(state)
+
+
+game:GetService('RunService').RenderStepped:connect(function()
+if state == false then
+for i,v in next, game:GetService('Players'):GetPlayers() do
+if v.Name ~= game:GetService('Players').LocalPlayer.Name then
+pcall(function()
+v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize,_G.HeadSize,_G.HeadSize)
+v.Character.HumanoidRootPart.Transparency = 1
+
+v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really red")
+v.Character.HumanoidRootPart.Material = "Neon"
+v.Character.HumanoidRootPart.CanCollide = false
+end)
+end
+end
+end
+end)
+
+
+end
+
+-------
+--esp
+local defaultHighlightColor = Color3.fromRGB(255, 255, 255) -- Default white color if no team color is found
+local outlineColor = Color3.fromRGB(0, 0, 0) -- Black outline color
+local fillTransparency = 0.5 -- Transparency of the fill
+local outlineTransparency = 0 -- Transparency of the outline
+local maxDistance = 500 -- Maximum distance to show highlights
+
+-- Toggle variable
+local highlightsEnabled = false
+
+-- Table to keep track of players and their distances
+local playerDistances = {}
+
+-- Function to get the highlight color based on the player's team
+local function getHighlightColor(player)
+    local team = player.Team
+    if team then
+        return team.TeamColor.Color
+    else
+        return defaultHighlightColor
+    end
+end
+
+-- Function to create highlight for a player
+local function createHighlight(player)
+    local character = player.Character or player.CharacterAdded:Wait()
+    if character and not character:FindFirstChild("PlayerHighlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "PlayerHighlight"
+        highlight.Adornee = character
+        highlight.FillColor = getHighlightColor(player)
+        highlight.OutlineColor = outlineColor
+        highlight.FillTransparency = fillTransparency
+        highlight.OutlineTransparency = outlineTransparency
+        highlight.Parent = character
+    end
+end
+
+-- Function to remove highlight from a player
+local function removeHighlight(player)
+    local character = player.Character
+    if character then
+        local highlight = character:FindFirstChild("PlayerHighlight")
+        if highlight then
+            highlight:Destroy()
+        end
+    end
+end
+
+-- Function to update highlights based on distance
+local function updateHighlights()
+    local localPlayer = game.Players.LocalPlayer
+    local localCharacter = localPlayer.Character
+    if localCharacter and localCharacter.PrimaryPart then
+        local localPosition = localCharacter.PrimaryPart.Position
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer then
+                local character = player.Character
+                if character and character.PrimaryPart then
+                    local distance = (localPosition - character.PrimaryPart.Position).Magnitude
+                    playerDistances[player] = distance
+                    if distance <= maxDistance then
+                        createHighlight(player)
+                    else
+                        removeHighlight(player)
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Batch processing function
+local function batchUpdateHighlights()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if highlightsEnabled and playerDistances[player] and playerDistances[player] <= maxDistance then
+            createHighlight(player)
+        else
+            removeHighlight(player)
+        end
+    end
+end
+
+-- Connect events
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if highlightsEnabled then
+            createHighlight(player)
+        end
+    end)
+    player.CharacterRemoving:Connect(function()
+        removeHighlight(player)
+    end)
+end)
+
+game.Players.PlayerRemoving:Connect(function(player)
+    removeHighlight(player)
+    playerDistances[player] = nil
+end)
+
+-- Update highlights periodically
+spawn(function()
+    while true do
+        if highlightsEnabled then
+            updateHighlights()
+        end
+        wait(0.5) -- Adjust the interval as needed
+    end
+end)
+
+-- Batch processing periodically
+spawn(function()
+    while true do
+        batchUpdateHighlights()
+        wait(0.1) -- Adjust the interval as needed
+    end
+end)
+
+-- Toggle button logic
+local function createToggleButton()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ToggleHighlightGui"
+    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(0, 200, 0, 50)
+    toggleButton.Position = UDim2.new(0, 10, 0, 10)
+    toggleButton.Text = "Disable Highlights"
+    toggleButton.Parent = screenGui
+
+    toggleButton.MouseButton1Click:Connect(function()
+        highlightsEnabled = not highlightsEnabled
+        if highlightsEnabled then
+            toggleButton.Text = "Disable Highlights"
+            updateHighlights()  -- Initial update when enabled
+        else
+            toggleButton.Text = "Enable Highlights"
+            -- Remove existing highlights
+            for _, player in pairs(game.Players:GetPlayers()) do
+                removeHighlight(player)
+            end
+        end
+    end)
+end
+
+-------
+
+-- Tabs
+
+--- Section for Tabs
+
+local MainTab = Window:Tab({
+    Title = "Main", 
+    Icon = "house",
+})
+
+Window:SelectTab(1)
+
+local SettingsTab = Window:Tab({
+    Title = "Sigman and File Settings",
+    Icon = "settings",
+})
+
+
+local Divider = Window:Divider()
+
+local firstTab = Window:Tab({
+    Title = "Page 1", 
+})
+
+
+-- Main Tab
+
+MainTab:Section({ Title = "LocalPlayer" })
+
+local walkspeedPr = MainTab:Paragraph({
+    Title = "walkspeed settings",
+    Image = "car",
+    Buttons = {
+        {
+            Title = "Set walkspeed 50",
+            Callback = function() 
+
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50
+
+end
+        },
+        {
+            Title = "Set walkspeed 100",
+            Callback = function() 
+
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+
+ end
+        },
+        {
+            Title = "Set walkspeed default",
+            Callback = function() 
+
+game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+
+ end
+        }
+    }
+})
+local jumppowerPr = MainTab:Paragraph({
+    Title = "JumpPower settings",
+    Buttons = {
+        {
+            Title = "Set JumpPower 100",
+            Callback = function() 
+
+game.Players.LocalPlayer.Character.Humanoid.JumpPower = 100
+
+ end
+        },
+        {
+            Title = "Set JumpPower 200",
+            Callback = function() 
+
+game.Players.LocalPlayer.Character.Humanoid.JumpPower = 200
+
+end
+        },
+        {
+            Title = "Set JumpPower Default",
+            Callback = function() 
+
+game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+
+ end
+        }
+    }
+})
+
+
+MainTab:Section({ Title = "Toggles" })
+
+local noclipToggle = MainTab:Toggle({
+    Title = "NoClip",
+    Callback = function(state)
+    print(state)
+    if state == true then
+		noclip()
+	else
+		clip()
+	end
+end})
+local hitboxToggle = MainTab:Toggle({
+    Title = "Hitbox",
+    Callback = function(state)
+    print(state)
+    if state == true then
+		_G.Disabled = true
+		
+	else
+		_G.Disabled = false
+		refHitbox(false)
+	end
+end})
+local espToggle = MainTab:Toggle({
+    Title = "Players ESP",
+    Callback = function(state)
+    print(state)
+    highlightsEnabled = state
+        if highlightsEnabled then
+            updateHighlights()  -- Initial update when enabled
+        else
+            for _, player in pairs(game.Players:GetPlayers()) do
+                removeHighlight(player)
+            end
+        end
+end})
+local nds = MainTab:Button({
+    Title = "TP To Player",
+    Callback = function()
+        local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "PlayerButtonsGui"
+gui.Parent = game:GetService("CoreGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 400)
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(53, 53, 53)
+frame.BorderColor3 = Color3.fromRGB(34, 34, 34)
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 20, 0, 20)
+closeButton.Position = UDim2.new(0, 5, 0, 5)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.Text = "X"
+closeButton.Parent = frame
+
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 20, 0, 20)
+minimizeButton.Position = UDim2.new(1, -25, 0, 5)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(255, 102, 102)
+minimizeButton.Text = "-"
+minimizeButton.Parent = frame
+
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, -10, 1, -30)
+scrollingFrame.Position = UDim2.new(0, 5, 0, 25)
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+scrollingFrame.Parent = frame
+scrollingFrame.BackgroundTransparency = 1
+
+local function teleportPlayer(targetPlayer)
+    LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
+end
+
+local function createButton(player)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 0, 30)
+    button.Position = UDim2.new(0, 0, 0, (#scrollingFrame:GetChildren() * 40))
+    button.BackgroundColor3 = Color3.fromRGB(34, 139, 34)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 12
+    button.Text = player.Name
+    button.TextWrapped = true
+    button.TextXAlignment = Enum.TextXAlignment.Left
+    button.Parent = scrollingFrame
+
+    local loopTpButton = Instance.new("TextButton")
+    loopTpButton.Size = UDim2.new(0.5, -5, 1, 0)
+    loopTpButton.Position = UDim2.new(0.5, 5, 0, 0)
+    loopTpButton.BackgroundColor3 = Color3.fromRGB(139, 34, 34)
+    loopTpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    loopTpButton.Font = Enum.Font.Gotham
+    loopTpButton.TextSize = 10
+    loopTpButton.Text = "Loop TP"
+    loopTpButton.TextWrapped = true
+    loopTpButton.TextXAlignment = Enum.TextXAlignment.Center
+    loopTpButton.Parent = button
+
+    local isLoopTpEnabled = false
+    local loopTpConnection
+
+    loopTpButton.MouseButton1Click:Connect(function()
+        if not isLoopTpEnabled then
+            loopTpButton.Text = "Stop TP"
+            loopTpConnection = RunService.RenderStepped:Connect(function()
+                if LocalPlayer.Character and player.Character then
+                    teleportPlayer(player)
+                end
+            end)
+            isLoopTpEnabled = true
+        else
+            loopTpButton.Text = "Loop TP"
+            loopTpConnection:Disconnect()
+            isLoopTpEnabled = false
+        end
+    end)
+
+    button.MouseButton1Click:Connect(function()
+        if not isLoopTpEnabled then
+            teleportPlayer(player)
+        end
+    end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        createButton(player)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    createButton(player)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    local buttons = scrollingFrame:GetChildren()
+    for _, button in ipairs(buttons) do
+        if button:IsA("TextButton") and button.Text == player.Name then
+            button:Destroy()
+        end
+    end
+end)
+
+minimizeButton.MouseButton1Click:Connect(function()
+    if frame.Size == UDim2.new(0, 300, 0, 400) then
+        frame.Size = UDim2.new(0, 30, 0, 30)
+        minimizeButton.Text = "+"
+        minimizeButton.Position = UDim2.new(1, -25, 0, 5)
+    else
+        frame.Size = UDim2.new(0, 300, 0, 400)
+        minimizeButton.Text = "-"
+        minimizeButton.Position = UDim2.new(1, -25, 0, 5)
+    end
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end) 
+    end,
+})
+
+
+
+MainTab:Section({ Title = "local player values" })
+
+local playerwalkspeedslider = MainTab:Slider({
+    Title = "player walkspeed",
+    Step = 1,
+    Value = {
+        Min = 16,
+        Max = 500,
+        Default = 16,
+    },
+    Callback = function(value)
+        game.Workspace[game.Players.LocalPlayer.Name].Humanoid.WalkSpeed = value
+    end
+})
+
+local playerfovslider = MainTab:Slider({
+    Title = "Player FOV",
+    Step = 1,
+    Value = {
+        Min = 20,
+        Max = 120,
+        Default = 70,
+    },
+    Callback = function(value)
+        game.Workspace.Camera.FieldOfView = value
+    end
+})
+
+
+
+SettingsTab:Section({ Title = "Keybinds" })
+
+local KeybindClicked = false
+local Keybind = SettingsTab:Keybind({
+    Title = "Keybind Toggle UI",
+    Desc = "Keybind Toggle SigmanHub",
+    Value = "LeftShift",
+    CanChange = true,
+    Callback = function(k)
+        if not KeybindClicked then
+            Window:Close()
+        else
+            Window:Open()
+        end
+        KeybindClicked = not KeybindClicked
+    end
+})
+----------------_--------
+firstTab:Section({ Title = "Natural Disaster Simulator" })
+local nds = firstTab:Button({
+    Title = "Natural Disaster: 1",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Rafanchik123/script/refs/heads/main/NaturalDisasterScripis"))()
+    end,
+})
+local nds2 = firstTab:Button({
+    Title = "Rafanchik123 Natural Disaster: 2",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Rafanchik123/script/refs/heads/main/Newscripis"))()
+    end,
+})
+--------------------------------------------
+firstTab:Section({ Title = "Blox Fruits" })
+local but = firstTab:Button({
+    Title = "Rafanchik123 Blox Fruits Script",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Rafanchik123/script/refs/heads/main/Bloxfruitsis"))()
+    end,
+})
+local but = firstTab:Button({
+    Title = "Rafanchik123 Blox Fruits V5 Script",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Rafanchik123/script/refs/heads/main/BloxisfruitsV5"))()
+    end,
+})
+local but = firstTab:Button({
+    Title = "AhmadV99 Blox Fruits Script (Hub)",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua", true))()
+    end,
+})
+local but = firstTab:Button({
+    Title = "kickTh Blox Fruits Some-X Script",
+    Callback = function()
+        loadstring(game:HttpGet"https://raw.githubusercontent.com/kickTh/SCRIPT-SOME-X-HUB/main/README.md")()
+    end,
+})
+--------------------------------------------------
+firstTab:Section({ Title = "Fisch" })
+local but = firstTab:Button({
+    Title = "Rafanchik123 Fisch V4 Script (fischnewv4)",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Rafanchik123/script/refs/heads/main/Fischnewv4"))()
+    end,
+})
+---------------------------------------------------
+
+local HttpService = game:GetService("HttpService")
+
+local folderPath = "SigmanHub"
+makefolder(folderPath)
+
+local function SaveFile(fileName, data)
+    local filePath = folderPath .. "/" .. fileName .. ".json"
+    local jsonData = HttpService:JSONEncode(data)
+    writefile(filePath, jsonData)
+end
+
+local function LoadFile(fileName)
+    local filePath = folderPath .. "/" .. fileName .. ".json"
+    if isfile(filePath) then
+        local jsonData = readfile(filePath)
+        return HttpService:JSONDecode(jsonData)
+    end
+end
+
+local function ListFiles()
+    local files = {}
+    for _, file in ipairs(listfiles(folderPath)) do
+        local fileName = file:match("([^/]+)%.json$")
+        if fileName then
+            table.insert(files, fileName)
+        end
+    end
+    return files
+end
+
+SettingsTab:Section({ Title = "Window" })
+
+local themeValues = {}
+for name, _ in pairs(WindUI:GetThemes()) do
+    table.insert(themeValues, name)
+end
+
+local themeDropdown = SettingsTab:Dropdown({
+    Title = "Select Theme SigmanHub",
+    Multi = false,
+    AllowNone = false,
+    Value = nil,
+    Values = themeValues,
+    Callback = function(theme)
+        WindUI:SetTheme(theme)
+    end
+})
+themeDropdown:Select(WindUI:GetCurrentTheme())
+
+local ToggleTransparency = SettingsTab:Toggle({
+    Title = "Toggle SigmanHub Transparency",
+    Callback = function(e)
+        Window:ToggleTransparency(e)
+    end,
+    Value = WindUI:GetTransparency()
+})
+
+SettingsTab:Section({ Title = "Save" })
+
+local fileNameInput = ""
+SettingsTab:Input({
+    Title = "Write File Name",
+    PlaceholderText = "Enter file name",
+    Callback = function(text)
+        fileNameInput = text
+    end
+})
+
+SettingsTab:Button({
+    Title = "Save File",
+    Callback = function()
+        if fileNameInput ~= "" then
+            SaveFile(fileNameInput, { Transparent = WindUI:GetTransparency(), Theme = WindUI:GetCurrentTheme() })
+        end
+    end
+})
+
+SettingsTab:Section({ Title = "Load" })
+
+local filesDropdown
+local files = ListFiles()
+
+filesDropdown = SettingsTab:Dropdown({
+    Title = "Select File",
+    Multi = false,
+    AllowNone = true,
+    Values = files,
+    Callback = function(selectedFile)
+        fileNameInput = selectedFile
+    end
+})
+
+SettingsTab:Button({
+    Title = "Load File",
+    Callback = function()
+        if fileNameInput ~= "" then
+            local data = LoadFile(fileNameInput)
+            if data then
+                WindUI:Notify({
+                    Title = "File Loaded",
+                    Content = "Loaded data: " .. HttpService:JSONEncode(data),
+                    Duration = 5,
+                })
+                if data.Transparent then
+Window:ToggleTransparency(data.Transparent)
+                    ToggleTransparency:SetValue(data.Transparent)
+                end
+                if data.Theme then WindUI:SetTheme(data.Theme) end
+            end
+        end
+    end
+})
+
+SettingsTab:Button({
+    Title = "Overwrite File",
+    Callback = function()
+        if fileNameInput ~= "" then
+            SaveFile(fileNameInput, { Transparent = WindUI:GetTransparency(), Theme = WindUI:GetCurrentTheme() })
+        end
+    end
+})
+
+SettingsTab:Button({
+    Title = "Refresh List",
+    Callback = function()
+        filesDropdown:Refresh(ListFiles())
+    end
+})
+
+local currentThemeName = WindUI:GetCurrentTheme()
+local themes = WindUI:GetThemes()
+
+local ThemeAccent = themes[currentThemeName].Accent
+local ThemeOutline = themes[currentThemeName].Outline
+local ThemeText = themes[currentThemeName].Text
+local ThemePlaceholderText = themes[currentThemeName].PlaceholderText
+
+local ButtonClose = SettingsTab:Button({
+    Title = "Button Main Close Window",
+    Callback = function()
+        Window:Close():Destroy()
+    end,
+})
+   
